@@ -18,12 +18,11 @@ void LDR::init()
 
 bool LDR::isTriggered()
 {
-    
-    int ldr0 = analogRead(LDR0);
-    int ldr1 = analogRead(LDR1);
-    int ldr2 = analogRead(LDR2);
+    this->ldr0_value = analogRead(LDR0);
+    this->ldr1_value = analogRead(LDR1);
+    this->ldr2_value = analogRead(LDR2);
 
-    if (ldr0 > sensitivity || ldr1 > sensitivity || ldr2 > sensitivity)
+    if (this->ldr0_value > sensitivity || this->ldr1_value > sensitivity || this->ldr2_value > sensitivity)
     {
         return true;
     }

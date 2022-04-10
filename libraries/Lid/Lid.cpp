@@ -13,14 +13,13 @@ void Lid::init()
 
 bool Lid::isTriggered()
 {
-    lid = analogRead(LID);
-
-    if (lid > threshHold)
+    int lid = analogRead(LID);
+    if (lid < threshHold)
     {
-        return True;
+        return true;
     }
     else
     {
-        return False;
+        return false;
     }
 }

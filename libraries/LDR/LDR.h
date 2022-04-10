@@ -12,6 +12,9 @@ private:
     void init();
 
 public:
+    int ldr0_value;
+    int ldr1_value;
+    int ldr2_value;
     LDR(byte, byte, byte, int);
     bool isTriggered();
 };
