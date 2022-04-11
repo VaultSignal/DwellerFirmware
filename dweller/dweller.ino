@@ -2,21 +2,12 @@
 #include <MFRC522.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include <Wire.h>  // Wire library - used for I2C communication
+
 #include <RGBLed.h>
 #include <Buzzer.h>
 #include <Lid.h>
 #include <LDR.h>
-
-#include <Wire.h>  // Wire library - used for I2C communication
-
-int ADXL345 = 0x53; // The ADXL345 sensor I2C address
-
-float X, Y, Z;  // Outputs
-
-double init_acc;
-double MAX_VALUE = 2.0;
-double MIN_VALUE = 0.0;
-double RANGE = 0.1;
 
 #define RED_RGB 6
 #define GREEN_RGB 3
@@ -32,6 +23,17 @@ double RANGE = 0.1;
 #define SS_PIN 10
 #define CE 7
 #define CSN 8
+
+int ADXL345 = 0x53; // The ADXL345 sensor I2C address
+
+float X, Y, Z;  // Outputs
+
+double init_acc;
+double MAX_VALUE = 2.0;
+double MIN_VALUE = 0.0;
+double RANGE = 0.1;
+
+
 
 RGBLed led(RED_RGB, GREEN_RGB, BLUE_RGB);
 Buzzer buzzer(BUZZER);
@@ -159,7 +161,6 @@ double readAccelerometer()
     double Y_ = (Y * Y);
     double Z_ = (Z * Z);
     double acc = sqrt(X_ + Y_ + Z_);
-    // Serial.println("a:" + String(acc) + " " + String(X) + " " + String(Y) + " " + String(Z));
               
     Wire.endTransmission();
 
