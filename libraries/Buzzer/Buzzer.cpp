@@ -35,6 +35,13 @@ void Buzzer::lockSound()
   noTone(BUZZER);
 }
 
+void Buzzer::wrongCard()
+{
+  tone(BUZZER, NOTE_B2);
+  delay(600);
+  noTone(BUZZER);
+}
+
 // Play alarm sound by given duration. Duration must be seconds.
 void Buzzer::alarmSound(double duration)
 {

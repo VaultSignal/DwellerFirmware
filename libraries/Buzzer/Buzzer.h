@@ -105,6 +105,7 @@ public:
     void lockSound();
     void alarmSound(double);
     void openningMusic();
+    void wrongCard();
 };
 
 #endif
