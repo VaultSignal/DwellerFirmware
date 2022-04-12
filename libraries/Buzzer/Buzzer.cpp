@@ -11,6 +11,7 @@ void Buzzer::init()
   pinMode(BUZZER, OUTPUT);
 }
 
+// Unlock sound
 void Buzzer::unlockSound()
 {
   tone(BUZZER, NOTE_E7);
@@ -22,6 +23,7 @@ void Buzzer::unlockSound()
   noTone(BUZZER);
 }
 
+// Lock sound
 void Buzzer::lockSound()
 {
   tone(BUZZER, NOTE_C8);
@@ -47,6 +49,7 @@ void Buzzer::alarmSound(double duration)
   noTone(BUZZER);
 }
 
+// Openning music of the dweller
 void Buzzer::openningMusic()
 {
   int tempo = 220;

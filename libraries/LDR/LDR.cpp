@@ -16,6 +16,7 @@ void LDR::init()
     pinMode(LDR2, INPUT);
 }
 
+// Read LDR values then check if there is a value bigger than the threshold.
 bool LDR::isTriggered()
 {
     this->ldr0_value = analogRead(LDR0);

@@ -17,7 +17,7 @@
 #define LDR0 A1
 #define LDR1 A2
 #define LDR2 A3
-#define LDR_SENSITIVITY 600
+#define LDR_SENSITIVITY 650
 #define RST_PIN  9
 #define SS_PIN 10
 #define CE 7
@@ -36,7 +36,7 @@ bool isUnlocked = false;
 bool isOpened = false;
 bool isAlarmOff = false;
 int boardID = 1;
-String alarmType;
+String transmitType = "PING";
 int alarmTime = 20;
 
 RF24 radio(CE, CSN);
@@ -77,19 +77,20 @@ void loop() {
   }
   else
   {
+    transmitData();
     if(!isUnlocked)
     {
       if(isMoved())
       {
-        alarmTurnedOff("ACCELEROMETER");
+        alarmTurnedOff("ACCELEROMETER TRIGGERED");
       }
       else if(ldr.isTriggered())
       {
-        alarmTurnedOff("LDR");
+        alarmTurnedOff("LDR TRIGGERED");
       }
       else if(lid.isTriggered())
       {
-        alarmTurnedOff("LID");
+        alarmTurnedOff("LID TRIGGERED");
       }
     }
     else
@@ -109,6 +110,7 @@ void loop() {
         led.ledColor(0, 0, 0);
         isUnlocked = false;
         isOpened = false;
+        transmitType = "PING";
         init_acc = readAccelerometer();
       }
     }
@@ -138,22 +140,26 @@ void readNfc() {
 
 bool alarmTurnedOff(String alarm) {
   isAlarmOff = true;
-  alarmType = alarm;
+  transmitType = alarm;
 }
 
-
-void alarm() {
-  led.ledColor(255, 0, 0);
-  buzzer.alarmSound(0.25);
-  led.ledColor(0, 0, 0);
-  buzzer.alarmSound(0.25);
+void transmitData() {
+  String text = getTransmitData();
+  Serial.println(text);
   radio.begin();
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MAX);
   radio.stopListening();
-  String text = getTransmitData();
-  Serial.println(text);
   radio.write(&text, sizeof(text));
+}
+
+void alarm() {
+  transmitData();
+  
+  led.ledColor(255, 0, 0);
+  buzzer.alarmSound(0.25);
+  led.ledColor(0, 0, 0);
+  buzzer.alarmSound(0.25);
   
   if(alarmTime == 0)
   {
@@ -199,7 +205,7 @@ String getTransmitData() {
     isMoving = "false";
   }
   
-  String json = "{\n\t\"device_id\": " + String(boardID) + ",\n\t\"alarm_type\": " + "\"" + alarmType + "\",\n\t\"is_open\": " + isOpen + ",\n\t\"is_moving\": " + isMoving + ",\n\t\"has_light\": " + hasLight + ",\n\t\"sensor\": {\n\t\t\"ldr\": [" + String(ldr.ldr0_value) + ", " + String(ldr.ldr1_value) + ", " + String(ldr.ldr2_value) + "],\n\t\t\"accelerometer\": [" + String(X) + ", " + String(Y) + ", " + String(Z) + "]\n\t}\n}";
+  String json = "{\n\t\"device_id\": " + String(boardID) + ",\n\t\"transmit_type\": " + "\"" + transmitType + "\",\n\t\"is_open\": " + isOpen + ",\n\t\"is_moving\": " + isMoving + ",\n\t\"has_light\": " + hasLight + ",\n\t\"sensor\": {\n\t\t\"ldr\": [" + String(ldr.ldr0_value) + ", " + String(ldr.ldr1_value) + ", " + String(ldr.ldr2_value) + "],\n\t\t\"accelerometer\": [" + String(X) + ", " + String(Y) + ", " + String(Z) + "]\n\t}\n}";
   
   return json;
   
