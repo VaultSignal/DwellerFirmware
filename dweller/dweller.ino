@@ -4,8 +4,8 @@
 #include <RF24.h>
 #include <Wire.h> // Wire library - used for I2C communication
 
-// #define SILENT 1
-// #define DEBUG 1
+#define SILENT 1
+#define DEBUG 1
 
 #include <RGBLed.h>
 #include <Buzzer.h>
@@ -170,7 +170,7 @@ void transmitData()
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MAX);
   radio.stopListening();
-  radio.write(payload, sizeof(payload));
+  radio.write(payload, 28);
   free(payload);
 }
 
@@ -296,10 +296,10 @@ double readAccelerometer()
  */
 void printPayload(byte *payload, int payloadSize)
 {
-  char ch[2];
+  char ch[3];
   for (int i = 0; i < payloadSize; i++)
   {
-    snprintf(ch, 2, "%X", (int)payload[i]);
+    snprintf(ch, 3, "%02X", (int)payload[i]);
     Serial.print(ch);
   }
   Serial.println();
