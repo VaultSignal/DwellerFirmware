@@ -43,7 +43,7 @@ RF24 radio(CE, CSN);
 uint64_t address = 0;
 
 MFRC522 rfid(SS_PIN, RST_PIN);
-byte ID[4] = {154, 248, 194, 21};
+byte ID[2][4] = {{208, 150, 247, 137}, {241, 173, 251, 137}};
 
 void setup()
 {
@@ -57,8 +57,6 @@ void setup()
   Wire.write(8);
   Wire.endTransmission();
   delay(10);
-
-  buzzer.openningMusic();
 
   led.ledColor(255, 255, 255);
   while (!isUnlocked)
@@ -121,22 +119,26 @@ void readNfc()
 {
   if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial())
   {
-    if (rfid.uid.uidByte[0] == ID[0] && rfid.uid.uidByte[1] == ID[1] && rfid.uid.uidByte[2] == ID[2] && rfid.uid.uidByte[3] == ID[3])
+    for (int i = 0; i < 2; i++)
     {
-      led.ledColor(0, 255, 0);
-      isUnlocked = true;
-      buzzer.unlockSound();
-      delay(300);
-      isAlarmOff = false;
-      Serial.println("unlocked");
+      if (rfid.uid.uidByte[0] == ID[i][0] && rfid.uid.uidByte[1] == ID[i][1] && rfid.uid.uidByte[2] == ID[i][2] && rfid.uid.uidByte[3] == ID[i][3])
+      {
+        led.ledColor(0, 255, 0);
+        isUnlocked = true;
+        buzzer.unlockSound();
+        delay(300);
+        isAlarmOff = false;
+        Serial.println("unlocked");
+        rfid.PICC_HaltA();
+        return;
+      }
     }
-    else
-    {
-      Serial.println("Locked.");
-      isUnlocked = false;
-    }
+    isUnlocked = false;
+    led.ledColor(255, 0, 0);
+    buzzer.wrongCard();
+    led.ledColor(0, 0, 0);
+    rfid.PICC_HaltA();
   }
-  rfid.PICC_HaltA();
 }
 
 bool alarmTurnedOff(String alarm)
