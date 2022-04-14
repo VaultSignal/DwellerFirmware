@@ -114,6 +114,8 @@ public:
  * Primarilly used for debugging purposes and can be used in as
  * a drop-in replacement for the normal Buzzer class.
  *
+ * This is a variation of the Null service pattern from here:
+ * https://gameprogrammingpatterns.com/service-locator.html#a-null-service
  */
 class NullBuzzer : public Buzzer
 {
