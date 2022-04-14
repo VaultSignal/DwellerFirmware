@@ -100,12 +100,31 @@ private:
 
 public:
     Buzzer(byte);
-    void init();
-    void unlockSound();
-    void lockSound();
-    void alarmSound(double);
-    void openningMusic();
-    void wrongCard();
+    virtual void init();
+    virtual void unlockSound();
+    virtual void lockSound();
+    virtual void alarmSound(double);
+    virtual void openningMusic();
+    virtual void wrongCard();
+};
+
+/**
+ * @brief Buzzer class that does not emit any sound.
+ *
+ * Primarilly used for debugging purposes and can be used in as
+ * a drop-in replacement for the normal Buzzer class.
+ *
+ */
+class NullBuzzer : public Buzzer
+{
+public:
+    NullBuzzer(byte byte_) : Buzzer(byte_){};
+    virtual void init() override{};
+    virtual void unlockSound() override{};
+    virtual void lockSound() override{};
+    virtual void alarmSound(double) override{};
+    virtual void openningMusic() override{};
+    virtual void wrongCard() override{};
 };
 
 #endif

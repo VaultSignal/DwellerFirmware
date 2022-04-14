@@ -4,6 +4,9 @@
 #include <RF24.h>
 #include <Wire.h> // Wire library - used for I2C communication
 
+// #define SILENT 1
+// #define DEBUG 1
+
 #include <RGBLed.h>
 #include <Buzzer.h>
 #include <Lid.h>
@@ -24,7 +27,11 @@
 #define CSN 8
 
 RGBLed led(RED_RGB, GREEN_RGB, BLUE_RGB);
+#ifndef SILENT
 Buzzer buzzer(BUZZER);
+#else
+NullBuzzer buzzer(BUZZER);
+#endif
 LDR ldr(LDR0, LDR1, LDR2, LDR_SENSITIVITY);
 Lid lid(LID, 200);
 
@@ -47,7 +54,9 @@ byte ID[2][4] = {{208, 150, 247, 137}, {241, 173, 251, 137}};
 
 void setup()
 {
+#ifdef DEBUG
   Serial.begin(9600);
+#endif
   SPI.begin();
 
   rfid.PCD_Init();
@@ -95,7 +104,9 @@ void loop()
     {
       if (lid.isTriggered())
       {
+#ifdef DEBUG
         Serial.println("triggered");
+#endif
         isOpened = true;
         led.ledColor(0, 120, 255);
         delay(125);
@@ -128,7 +139,9 @@ void readNfc()
         buzzer.unlockSound();
         delay(300);
         isAlarmOff = false;
+#ifdef DEBUG
         Serial.println("unlocked");
+#endif
         rfid.PICC_HaltA();
         return;
       }
@@ -150,7 +163,9 @@ bool alarmTurnedOff(String alarm)
 void transmitData()
 {
   byte *payload = getTransmitData();
-  Serial.println(payload[1]);
+#ifdef DEBUG
+  printPayload(payload, 28);
+#endif
   radio.begin();
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MAX);
@@ -271,3 +286,22 @@ double readAccelerometer()
 
   return acc;
 }
+
+#ifdef DEBUG
+/**
+ * @brief Print a payload as hexadecimal digits to the Serial console.
+ *
+ * @param payload Payload to print.
+ * @param payloadSize Size of the payload, in bytes.
+ */
+void printPayload(byte *payload, int payloadSize)
+{
+  char ch[2];
+  for (int i = 0; i < payloadSize; i++)
+  {
+    snprintf(ch, 2, "%X", (int)payload[i]);
+    Serial.print(ch);
+  }
+  Serial.println();
+}
+#endif
