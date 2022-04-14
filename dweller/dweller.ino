@@ -2,7 +2,7 @@
 #include <MFRC522.h>
 #include <nRF24L01.h>
 #include <RF24.h>
-#include <Wire.h>  // Wire library - used for I2C communication
+#include <Wire.h> // Wire library - used for I2C communication
 
 #include <RGBLed.h>
 #include <Buzzer.h>
@@ -18,7 +18,7 @@
 #define LDR1 A2
 #define LDR2 A3
 #define LDR_SENSITIVITY 650
-#define RST_PIN  9
+#define RST_PIN 9
 #define SS_PIN 10
 #define CE 7
 #define CSN 8
@@ -28,28 +28,28 @@ Buzzer buzzer(BUZZER);
 LDR ldr(LDR0, LDR1, LDR2, LDR_SENSITIVITY);
 Lid lid(LID, 200);
 
-int ADXL345 = 0x53; 
-float X, Y, Z;  
+int ADXL345 = 0x53;
+float X, Y, Z;
 double init_acc;
 
 bool isUnlocked = false;
 bool isOpened = false;
 bool isAlarmOff = false;
-int boardID = 1;
+byte boardID = 1;
 String transmitType = "PING";
 int alarmTime = 20;
 
 RF24 radio(CE, CSN);
-const byte address[6] = "00001"; 
+uint64_t address = 0;
 
 MFRC522 rfid(SS_PIN, RST_PIN);
 byte ID[4] = {154, 248, 194, 21};
 
-
-void setup() {
+void setup()
+{
   Serial.begin(9600);
   SPI.begin();
-  
+
   rfid.PCD_Init();
   Wire.begin();
   Wire.beginTransmission(ADXL345);
@@ -58,44 +58,44 @@ void setup() {
   Wire.endTransmission();
   delay(10);
 
-  // buzzer.openningMusic();
+  buzzer.openningMusic();
 
   led.ledColor(255, 255, 255);
-  while(!isUnlocked)
+  while (!isUnlocked)
     readNfc();
 
   init_acc = readAccelerometer();
 }
 
-
-void loop() {
+void loop()
+{
   readNfc();
-  
-  if(isAlarmOff) 
+
+  if (isAlarmOff)
   {
     alarm();
   }
   else
   {
     transmitData();
-    if(!isUnlocked)
+    if (!isUnlocked)
     {
-      if(isMoved())
+      if (isMoved())
       {
         alarmTurnedOff("ACCELEROMETER TRIGGERED");
       }
-      else if(ldr.isTriggered())
+      else if (ldr.isTriggered())
       {
         alarmTurnedOff("LDR TRIGGERED");
       }
-      else if(lid.isTriggered())
+      else if (lid.isTriggered())
       {
         alarmTurnedOff("LID TRIGGERED");
       }
     }
     else
     {
-      if(lid.isTriggered())
+      if (lid.isTriggered())
       {
         Serial.println("triggered");
         isOpened = true;
@@ -104,7 +104,7 @@ void loop() {
         led.ledColor(0, 0, 0);
         delay(100);
       }
-      else if(!lid.isTriggered() && isOpened)
+      else if (!lid.isTriggered() && isOpened)
       {
         buzzer.lockSound();
         led.ledColor(0, 0, 0);
@@ -117,9 +117,10 @@ void loop() {
   }
 }
 
-
-void readNfc() {
-  if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+void readNfc()
+{
+  if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial())
+  {
     if (rfid.uid.uidByte[0] == ID[0] && rfid.uid.uidByte[1] == ID[1] && rfid.uid.uidByte[2] == ID[2] && rfid.uid.uidByte[3] == ID[3])
     {
       led.ledColor(0, 255, 0);
@@ -128,40 +129,44 @@ void readNfc() {
       delay(300);
       isAlarmOff = false;
       Serial.println("unlocked");
-    } 
-    else 
+    }
+    else
     {
+      Serial.println("Locked.");
       isUnlocked = false;
     }
   }
   rfid.PICC_HaltA();
 }
 
-
-bool alarmTurnedOff(String alarm) {
+bool alarmTurnedOff(String alarm)
+{
   isAlarmOff = true;
   transmitType = alarm;
 }
 
-void transmitData() {
-  String text = getTransmitData();
-  Serial.println(text);
+void transmitData()
+{
+  byte *payload = getTransmitData();
+  Serial.println(payload[1]);
   radio.begin();
   radio.openWritingPipe(address);
   radio.setPALevel(RF24_PA_MAX);
   radio.stopListening();
-  radio.write(&text, sizeof(text));
+  radio.write(payload, sizeof(payload));
+  free(payload);
 }
 
-void alarm() {
+void alarm()
+{
   transmitData();
-  
+
   led.ledColor(255, 0, 0);
   buzzer.alarmSound(0.25);
   led.ledColor(0, 0, 0);
   buzzer.alarmSound(0.25);
-  
-  if(alarmTime == 0)
+
+  if (alarmTime == 0)
   {
     init_acc = readAccelerometer();
     alarmTime = 20;
@@ -169,83 +174,98 @@ void alarm() {
   alarmTime = alarmTime - 1;
 }
 
-
-String getTransmitData() {
+byte *getTransmitData()
+{
   readAccelerometer();
   ldr.isTriggered();
 
-  String isOpen;
-  String hasLight;
-  String isMoving;
-  
-  if(lid.isTriggered()) 
-  {
-    isOpen = "true";
-  }
-  else
-  {
-    isOpen = "false";
-  }
+  bool isOpen = lid.isTriggered();
+  bool hasLight = ldr.isTriggered();
+  bool isMoving = isMoved();
 
-  if(ldr.isTriggered()) 
-  {
-    hasLight = "true";
-  }
-  else
-  {
-    hasLight = "false";
-  }
+  byte openByte = isOpen ? 1 : 0;
+  byte movingByte = isMoving ? 1 : 0;
+  byte lightByte = hasLight ? 1 : 0;
 
-  if(isMoved()) 
-  {
-    isMoving = "true";
-  }
-  else
-  {
-    isMoving = "false";
-  }
-  
-  String json = "{\n\t\"device_id\": " + String(boardID) + ",\n\t\"transmit_type\": " + "\"" + transmitType + "\",\n\t\"is_open\": " + isOpen + ",\n\t\"is_moving\": " + isMoving + ",\n\t\"has_light\": " + hasLight + ",\n\t\"sensor\": {\n\t\t\"ldr\": [" + String(ldr.ldr0_value) + ", " + String(ldr.ldr1_value) + ", " + String(ldr.ldr2_value) + "],\n\t\t\"accelerometer\": [" + String(X) + ", " + String(Y) + ", " + String(Z) + "]\n\t}\n}";
-  
-  return json;
-  
+  // Convert the X, Y and Z accelorometer values
+  // to the bytes. A float should take 4 bytes.
+  byte *x = reinterpret_cast<byte *>(&X);
+  byte *y = reinterpret_cast<byte *>(&Y);
+  byte *z = reinterpret_cast<byte *>(&Z);
+
+  // Now convert to LDR values to bytes,
+  // An int should take 4 bytes as well.
+  byte *ldr_0 = reinterpret_cast<byte *>(&ldr.ldr0_value);
+  byte *ldr_1 = reinterpret_cast<byte *>(&ldr.ldr1_value);
+  byte *ldr_2 = reinterpret_cast<byte *>(&ldr.ldr2_value);
+
+  byte payload[] = {
+      boardID,
+      openByte,
+      movingByte,
+      lightByte,
+      x[0],
+      x[1],
+      x[2],
+      x[3],
+      y[0],
+      y[1],
+      y[2],
+      y[3],
+      z[0],
+      z[1],
+      z[2],
+      z[3],
+      ldr_0[0],
+      ldr_0[1],
+      ldr_0[2],
+      ldr_0[3],
+      ldr_1[0],
+      ldr_1[1],
+      ldr_1[2],
+      ldr_1[3],
+      ldr_2[0],
+      ldr_2[1],
+      ldr_2[2],
+      ldr_2[3],
+  };
+  byte *payload_ptr = (byte *)malloc(28 * sizeof(byte));
+  memcpy(payload_ptr, payload, 28);
+  return payload_ptr;
 }
-
 
 bool isMoved()
 {
-    double acc = readAccelerometer();
-    double threshold = 0.05;
-    
-    if(acc > init_acc + threshold)
-    {
-      // Serial.println("true");
-      return true;
-    }
-    return false;
+  double acc = readAccelerometer();
+  double threshold = 0.05;
 
+  if (acc > init_acc + threshold)
+  {
+    // Serial.println("true");
+    return true;
+  }
+  return false;
 }
-
 
 double readAccelerometer()
 {
-    Wire.beginTransmission(ADXL345);
-    Wire.write(0x32);
-    Wire.endTransmission(false);
-    Wire.requestFrom(ADXL345, 6, true);
-    X = ( Wire.read()| Wire.read() << 8); // X-axis value
-    X = X/256; //For a range of +-2g, we need to divide the raw values by 256, according to the datasheet
-    Y = ( Wire.read()| Wire.read() << 8); // Y-axis value
-    Y = Y/256;
-    Z = ( Wire.read()| Wire.read() << 8); // Z-axis value
-    Z = Z/256;
+  Wire.beginTransmission(ADXL345);
+  Wire.write(0x32);
+  Wire.endTransmission(false);
+  Wire.requestFrom(ADXL345, 6, true);
+  X = (Wire.read() | Wire.read() << 8); // X-axis value
+  X = X / 256;                          // For a range of +-2g, we need to divide the raw values by 256, according to the datasheet
+  Y = (Wire.read() | Wire.read() << 8); // Y-axis value
+  Y = Y / 256;
+  Z = (Wire.read() | Wire.read() << 8); // Z-axis value
+  Z = Z / 256;
 
-    double X_ = (X * X);
-    double Y_ = (Y * Y);
-    double Z_ = (Z * Z);
-    double acc = sqrt(X_ + Y_ + Z_);
-              
-    Wire.endTransmission();
+  double X_ = (X * X);
+  double Y_ = (Y * Y);
+  double Z_ = (Z * Z);
+  double acc = sqrt(X_ + Y_ + Z_);
 
-    return acc;
+  Wire.endTransmission();
+
+  return acc;
 }
