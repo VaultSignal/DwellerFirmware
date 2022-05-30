@@ -4,7 +4,7 @@
 #include <RF24.h>
 #include <Wire.h> // Wire library - used for I2C communication
 
-#define SILENT 1
+//#define SILENT 1
 #define DEBUG 1
 
 #include <RGBLed.h>
@@ -20,7 +20,7 @@
 #define LDR0 A1
 #define LDR1 A2
 #define LDR2 A3
-#define LDR_SENSITIVITY 650
+#define LDR_SENSITIVITY 670
 #define RST_PIN 9
 #define SS_PIN 10
 #define CE 7
@@ -33,7 +33,7 @@ Buzzer buzzer(BUZZER);
 NullBuzzer buzzer(BUZZER);
 #endif
 LDR ldr(LDR0, LDR1, LDR2, LDR_SENSITIVITY);
-Lid lid(LID, 200);
+Lid lid(LID);
 
 int ADXL345 = 0x53;
 float X, Y, Z;
@@ -211,7 +211,7 @@ byte *getTransmitData()
   byte *z = reinterpret_cast<byte *>(&Z);
 
   // Now convert to LDR values to bytes,
-  // An int should take 4 bytes as well.
+  // An int should take 2 bytes.
   byte *ldr_0 = reinterpret_cast<byte *>(&ldr.ldr0_value);
   byte *ldr_1 = reinterpret_cast<byte *>(&ldr.ldr1_value);
   byte *ldr_2 = reinterpret_cast<byte *>(&ldr.ldr2_value);
@@ -233,18 +233,18 @@ byte *getTransmitData()
       z[1],
       z[2],
       z[3],
+      0x0,
+      0x0,
       ldr_0[0],
       ldr_0[1],
-      ldr_0[2],
-      ldr_0[3],
+      0x0,
+      0x0,
       ldr_1[0],
       ldr_1[1],
-      ldr_1[2],
-      ldr_1[3],
+      0x0,
+      0x0,
       ldr_2[0],
       ldr_2[1],
-      ldr_2[2],
-      ldr_2[3],
   };
   byte *payload_ptr = (byte *)malloc(28 * sizeof(byte));
   memcpy(payload_ptr, payload, 28);

@@ -6,10 +6,9 @@ class Lid
 {
 private:
     byte LID;
-    int threshHold;
 
 public:
-    Lid(byte, int);
+    Lid(byte);
     void init();
     bool isTriggered();
 };
