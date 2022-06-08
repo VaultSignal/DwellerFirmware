@@ -5,7 +5,7 @@
 #include <Wire.h> // Wire library - used for I2C communication
 
 //#define SILENT 1
-#define DEBUG 1
+//#define DEBUG 1
 
 #include <RGBLed.h>
 #include <Buzzer.h>
@@ -20,7 +20,7 @@
 #define LDR0 A1
 #define LDR1 A2
 #define LDR2 A3
-#define LDR_SENSITIVITY 670
+#define LDR_SENSITIVITY 600
 #define RST_PIN 9
 #define SS_PIN 10
 #define CE 7
@@ -215,6 +215,16 @@ byte *getTransmitData()
   byte *ldr_0 = reinterpret_cast<byte *>(&ldr.ldr0_value);
   byte *ldr_1 = reinterpret_cast<byte *>(&ldr.ldr1_value);
   byte *ldr_2 = reinterpret_cast<byte *>(&ldr.ldr2_value);
+
+#ifdef DEBUG
+  Serial.println("LDR Values: ");
+  Serial.print(ldr.ldr0_value);
+  Serial.print(", ");
+  Serial.print(ldr.ldr1_value);
+  Serial.print(", ");
+  Serial.print(ldr.ldr2_value);
+  Serial.println(" ");
+#endif
 
   byte payload[] = {
       boardID,
